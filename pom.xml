@@ -94,6 +94,11 @@
                 <enabled>false</enabled>
             </snapshots>
         </repository>
+        <repository>
+            <id>spring-framework-repository</id>
+            <name>Spring Framework Repository</name>
+            <url>https://repo.spring.io/release/</url>
+        </repository>
     </repositories>
 
     <pluginRepositories>
@@ -101,6 +106,11 @@
             <id>spring-maven-release</id>
             <name>Spring Maven Release Repository</name>
             <url>https://maven.springframework.org/release</url>
+        </pluginRepository>
+        <pluginRepository>
+            <id>spring-framework-repository</id>
+            <name>Spring Framework Repository</name>
+            <url>https://repo.spring.io/release/</url>
         </pluginRepository>
     </pluginRepositories>
 
