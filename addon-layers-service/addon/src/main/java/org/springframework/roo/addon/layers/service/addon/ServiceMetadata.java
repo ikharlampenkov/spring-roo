@@ -26,17 +26,8 @@ import org.springframework.roo.model.SpringletsJavaType;
 import org.springframework.roo.project.LogicalPath;
 
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
 
 /**
  * Metadata for {@link RooService}.
@@ -670,6 +661,7 @@ public class ServiceMetadata extends AbstractItdTypeDetailsProvidingMetadataItem
   private MethodMetadata getFindOneMethod() {
     // Define method name
     JavaSymbolName methodName = new JavaSymbolName("findOne");
+    //JavaType optionalJavaType = JavaType.wrapperOf(new JavaType(Optional.class), entity);
 
     // Define method parameter types
     List<AnnotatedJavaType> parameterTypes = new ArrayList<AnnotatedJavaType>();

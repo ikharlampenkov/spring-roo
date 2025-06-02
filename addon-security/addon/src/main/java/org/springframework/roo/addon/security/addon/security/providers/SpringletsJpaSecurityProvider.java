@@ -37,7 +37,7 @@ import java.util.logging.Logger;
 public class SpringletsJpaSecurityProvider implements SecurityProvider {
 
   private static final Property SPRINGLETS_VERSION_PROPERTY = new Property("springlets.version",
-      "1.2.0.RELEASE");
+      "1.3.2.BUILD-SNAPSHOT");
 
   private static final Dependency SPRINGLETS_SECURITY_AUTHENTICATION_STARTER = new Dependency(
       "io.springlets", "springlets-boot-starter-authentication", "${springlets.version}");
@@ -45,10 +45,10 @@ public class SpringletsJpaSecurityProvider implements SecurityProvider {
   private static final String THYMELEAF_SPRING_SECURITY_VERSION = "3.0.0.RELEASE";
 
   private static final Property THYMELEAF_SPRING_SECURITY_VERSION_PROPERTY = new Property(
-      "thymeleaf-extras-springsecurity4.version", THYMELEAF_SPRING_SECURITY_VERSION);
+      "thymeleaf-extras-springsecurity5.version", THYMELEAF_SPRING_SECURITY_VERSION);
 
   private static final Dependency THYMELEAF_SPRING_SECURITY = new Dependency(
-      "org.thymeleaf.extras", "thymeleaf-extras-springsecurity4", null);
+      "org.thymeleaf.extras", "thymeleaf-extras-springsecurity5", null);
 
   protected final static Logger LOGGER = HandlerUtils
       .getLogger(SpringletsJpaSecurityProvider.class);

@@ -60,7 +60,14 @@ public class ServiceImplMetadata extends AbstractItdTypeDetailsProvidingMetadata
 
   private static final AnnotationMetadata LAZY_ANNOTATION = new AnnotationMetadataBuilder(
       SpringJavaType.LAZY).build();
+
+  private static final JavaSymbolName FIND_ONE = new JavaSymbolName("getOne"); // "findById"
+
   private static final JavaSymbolName FIND_ONE_DETACHED = new JavaSymbolName("findOneDetached");
+
+  private static final JavaSymbolName FIND_ALL_ITERABLE = new JavaSymbolName("findAllById");
+
+  private static final JavaSymbolName SAVE_ITERABLE = new JavaSymbolName("saveAll");
 
   private ImportRegistrationResolver importResolver;
 
@@ -637,17 +644,26 @@ public class ServiceImplMetadata extends AbstractItdTypeDetailsProvidingMetadata
     // Check what is the particular method
     boolean isDelete = methodToBeImplemented.getMethodName().getSymbolName().equals("delete");
     boolean isSaveMethod =
-        methodToBeImplemented.equals(this.serviceMetadata.getCurrentSaveMethod());
+        methodToBeImplemented.equals(this.serviceMetadata.getCurrentSaveBatchMethod())
+            || methodToBeImplemented.equals(this.serviceMetadata.getCurrentSaveMethod());
+    boolean isFindOne =
+        methodToBeImplemented.equals(this.serviceMetadata.getCurrentFindOneMethod());
     boolean isFindOneForUpdate =
         methodToBeImplemented.getMethodName().getSymbolName().equals("findOneForUpdate");
+    boolean isFindAllIterable =
+        methodToBeImplemented.getMethodName().getSymbolName().equals("findAll") && isBatch;
 
     InvocableMemberBodyBuilder bodyBuilder;
     if (isDelete) {
       bodyBuilder = builDeleteMethodBody(methodToBeImplemented, isBatch);
     } else if (isSaveMethod) {
-      bodyBuilder = builSaveMethodBody(methodToBeImplemented);
+      bodyBuilder = builSaveMethodBody(methodToBeImplemented, isBatch);
+    } else if (isFindOne) {
+      bodyBuilder = buildFindOneBody(methodToBeImplemented);
     } else if (isFindOneForUpdate) {
       bodyBuilder = buildFindOneForUpdateBody(methodToBeImplemented);
+    } else if (isFindAllIterable) {
+      bodyBuilder = buildFindAllIterableMethodBody(methodToBeImplemented);
     } else {
       bodyBuilder = builMethodBody(methodToBeImplemented);
     }
@@ -722,6 +738,21 @@ public class ServiceImplMetadata extends AbstractItdTypeDetailsProvidingMetadata
     return bodyBuilder;
   }
 
+  private InvocableMemberBodyBuilder buildFindAllIterableMethodBody(
+      final MethodMetadata methodToBeImplemented) {
+    // Generate body
+    InvocableMemberBodyBuilder bodyBuilder = new InvocableMemberBodyBuilder();
+
+    final JavaSymbolName param0 = methodToBeImplemented.getParameterNames().get(0);
+
+    // return repositoryField.findAllById(ids);
+    bodyBuilder.appendFormalLine("%s %s().%s(%s);",
+        methodToBeImplemented.getReturnType().equals(JavaType.VOID_PRIMITIVE) ? "" : "return",
+        getAccessorMethod(repositoryFieldMetadata).getMethodName(),
+        FIND_ALL_ITERABLE.getSymbolName(), param0);
+    return bodyBuilder;
+  }
+
   /**
    * Build method body which delegates on repository
    *
@@ -743,7 +774,7 @@ public class ServiceImplMetadata extends AbstractItdTypeDetailsProvidingMetadata
       // List<Entity> toDelete = repositoryField.FIND_ALL_METHOD(paramName);
       bodyBuilder.appendFormalLine("%s<%s> toDelete = %s().%s(%s);",
           getNameOfJavaType(JavaType.LIST), entity, getAccessorMethod(repositoryFieldMetadata)
-              .getMethodName(), this.findAllIterableMethod.getMethodName(), param0);
+              .getMethodName(), FIND_ALL_ITERABLE.getSymbolName(), param0);
 
       bodyBuilder.appendFormalLine("%s().deleteInBatch(toDelete);",
           getAccessorMethod(repositoryFieldMetadata).getMethodName(),
@@ -859,6 +890,24 @@ public class ServiceImplMetadata extends AbstractItdTypeDetailsProvidingMetadata
   }
 
   /**
+   * Build "findOne" method body which delegates on repository
+   * @param methodToBeImplemented
+   * @return
+   */
+  private InvocableMemberBodyBuilder buildFindOneBody(MethodMetadata methodToBeImplemented) {
+    // Generate body
+    InvocableMemberBodyBuilder bodyBuilder = new InvocableMemberBodyBuilder();
+    final JavaSymbolName param0 = methodToBeImplemented.getParameterNames().get(0);
+
+    // return entityRepository.getOne(id);
+    bodyBuilder.appendFormalLine("%s %s().%s(%s);",
+        methodToBeImplemented.getReturnType().equals(JavaType.VOID_PRIMITIVE) ? "" : "return",
+        getAccessorMethod(repositoryFieldMetadata).getMethodName(), FIND_ONE.getSymbolName(),
+        param0);
+    return bodyBuilder;
+  }
+
+  /**
    * Build "findOneForUpdate" method body which delegates on repository
    *
    * @param methodToBeImplemented
@@ -881,40 +930,48 @@ public class ServiceImplMetadata extends AbstractItdTypeDetailsProvidingMetadata
   /**
    * Build "save" method body which delegates on repository
    *
+   * @param isDelete
    * @param methodToBeImplemented
    * @param isBatch
-   * @param isDelete
    * @return
    */
-  private InvocableMemberBodyBuilder builSaveMethodBody(final MethodMetadata methodToBeImplemented) {
+  private InvocableMemberBodyBuilder builSaveMethodBody(final MethodMetadata methodToBeImplemented,
+      boolean isBatch) {
     // Generate body
     InvocableMemberBodyBuilder bodyBuilder = new InvocableMemberBodyBuilder();
     final JavaSymbolName param0 = methodToBeImplemented.getParameterNames().get(0);
 
-    /*
-     * // Ensure the relationships are maintained
-     * entity.addToRelatedEntity(entity.getRelatedEntity());
-     */
-    boolean commentAdded = false;
-    Map<String, RelationInfo> relationInfos = entityMetadata.getRelationInfos();
-    for (Entry<String, RelationInfo> entry : relationInfos.entrySet()) {
-      RelationInfo info = entry.getValue();
-      if (info.cardinality == Cardinality.ONE_TO_ONE) {
-        if (!commentAdded) {
+    if (isBatch) {
+      bodyBuilder.appendFormalLine("%s %s().%s(%s);",
+          methodToBeImplemented.getReturnType().equals(JavaType.VOID_PRIMITIVE) ? "" : "return",
+          getAccessorMethod(repositoryFieldMetadata).getMethodName(),
+          SAVE_ITERABLE.getSymbolName(), param0);
+    } else {
+      /*
+       * // Ensure the relationships are maintained
+       * entity.addToRelatedEntity(entity.getRelatedEntity());
+       */
+      boolean commentAdded = false;
+      Map<String, RelationInfo> relationInfos = entityMetadata.getRelationInfos();
+      for (Entry<String, RelationInfo> entry : relationInfos.entrySet()) {
+        RelationInfo info = entry.getValue();
+        if (info.cardinality == Cardinality.ONE_TO_ONE) {
+          if (!commentAdded) {
+            bodyBuilder.newLine();
+            bodyBuilder.appendFormalLine("// Ensure the relationships are maintained");
+            commentAdded = true;
+          }
+          bodyBuilder.appendFormalLine("%s.%s(%s.get%s());", param0,
+              info.addMethod.getMethodName(), param0, StringUtils.capitalize(entry.getKey()));
           bodyBuilder.newLine();
-          bodyBuilder.appendFormalLine("// Ensure the relationships are maintained");
-          commentAdded = true;
         }
-        bodyBuilder.appendFormalLine("%s.%s(%s.get%s());", param0, info.addMethod.getMethodName(),
-            param0, StringUtils.capitalize(entry.getKey()));
-        bodyBuilder.newLine();
       }
-    }
 
-    bodyBuilder.appendFormalLine("%s %s().%s(%s);",
-        methodToBeImplemented.getReturnType().equals(JavaType.VOID_PRIMITIVE) ? "" : "return",
-        getAccessorMethod(repositoryFieldMetadata).getMethodName(), methodToBeImplemented
-            .getMethodName().getSymbolName(), param0);
+      bodyBuilder.appendFormalLine("%s %s().%s(%s);",
+          methodToBeImplemented.getReturnType().equals(JavaType.VOID_PRIMITIVE) ? "" : "return",
+          getAccessorMethod(repositoryFieldMetadata).getMethodName(), methodToBeImplemented
+              .getMethodName().getSymbolName(), param0);
+    }
     return bodyBuilder;
   }
 

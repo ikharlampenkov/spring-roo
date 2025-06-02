@@ -484,9 +484,9 @@ public class ThymeleafMVCViewResponseService extends AbstractOperations implemen
     // ROO-3813: Use Thymeleaf 3.0 instead of the provided version by Spring IO
     // More info about Thymelead 3.0 using Spring Boot here
     // https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#howto-use-thymeleaf-3
-    getProjectOperations().addProperty("", new Property("thymeleaf.version", "3.0.0.RELEASE"));
+    getProjectOperations().addProperty("", new Property("thymeleaf.version", "3.0.11.RELEASE"));
     getProjectOperations().addProperty("",
-        new Property("thymeleaf-layout-dialect.version", "2.0.0"));
+        new Property("thymeleaf-layout-dialect.version", "2.0.5"));
     getProjectOperations().addProperty("", new Property("thymeleaf-data-dialect.version", "2.0.1"));
   }
 
@@ -515,10 +515,10 @@ public class ThymeleafMVCViewResponseService extends AbstractOperations implemen
     List<Dependency> dependencies = new ArrayList<Dependency>();
 
     // Add WebJar locator dependency
-    dependencies.add(new Dependency("org.webjars", "webjars-locator", null));
+    dependencies.add(new Dependency("org.webjars", "webjars-locator-core", null));
 
     //Add Bootstrap WebJar
-    getProjectOperations().addProperty(rootModuleName, new Property("bootstrap.version", "3.3.6"));
+    getProjectOperations().addProperty(rootModuleName, new Property("bootstrap.version", "3.4.1"));
     dependencies.add(new Dependency("org.webjars.bower", "bootstrap", "${bootstrap.version}"));
 
     // Add Datatables and Datatables related WebJars
@@ -591,7 +591,7 @@ public class ThymeleafMVCViewResponseService extends AbstractOperations implemen
     dependencies.add(new Dependency("org.webjars.bower", "font-awesome", "${fontawesome.version}"));
 
     // Add jQuery WebJar
-    getProjectOperations().addProperty(rootModuleName, new Property("jquery.version", "1.12.3"));
+    getProjectOperations().addProperty(rootModuleName, new Property("jquery.version", "1.12.4"));
     dependencies.add(new Dependency("org.webjars.bower", "jquery", "${jquery.version}"));
 
     // Add jQuery InputMask WebJar

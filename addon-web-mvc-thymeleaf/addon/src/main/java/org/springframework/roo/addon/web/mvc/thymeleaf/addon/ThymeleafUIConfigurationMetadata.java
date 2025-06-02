@@ -40,10 +40,13 @@ public class ThymeleafUIConfigurationMetadata extends AbstractItdTypeDetailsProv
       .create(PROVIDES_TYPE_STRING);
 
   private static final JavaType THYMELEAF_VIEW_RESOLVER = new JavaType(
-      "org.thymeleaf.spring4.view.ThymeleafViewResolver");
+      "org.thymeleaf.spring5.view.ThymeleafViewResolver");
   private static final JavaType SPRING_RESOURCE_TEMPLATE_RESOLVER = new JavaType(
-      "org.thymeleaf.spring4.templateresolver.SpringResourceTemplateResolver");
+      "org.thymeleaf.spring5.templateresolver.SpringResourceTemplateResolver");
   private static final JavaType TEMPLATE_ENGINE = new JavaType("org.thymeleaf.TemplateEngine");
+
+  private static final JavaType TEMPLATE_ENGINE_INTERFACE = new JavaType(
+      "org.thymeleaf.spring5.ISpringTemplateEngine");
   private static final JavaType THYMELEAF_PROPERTIES = new JavaType(
       "org.springframework.boot.autoconfigure.thymeleaf.ThymeleafProperties");
   private static final JavaType TEMPLATE_MODE = new JavaType(
@@ -171,7 +174,7 @@ public class ThymeleafUIConfigurationMetadata extends AbstractItdTypeDetailsProv
 
     /*
         ThymeleafViewResolver resolver = new ThymeleafViewResolver();
-        resolver.setTemplateEngine(this.templateEngine);
+        resolver.setTemplateEngine((ISpringTemplateEngine) this.templateEngine);
         resolver.setCharacterEncoding(UTF8);
         resolver.setContentType("application/javascript");
         resolver.setViewNames(new String[] {"*.js"});
@@ -180,8 +183,9 @@ public class ThymeleafUIConfigurationMetadata extends AbstractItdTypeDetailsProv
      */
     bodyBuilder.appendFormalLine("%1$s resolver = new %1$s();",
         getNameOfJavaType(THYMELEAF_VIEW_RESOLVER));
-    bodyBuilder.appendFormalLine("resolver.setTemplateEngine(%s());",
-        getAccessorMethod(this.templateEngineField).getMethodName());
+    bodyBuilder.appendFormalLine("resolver.setTemplateEngine((%s) %s());",
+        getNameOfJavaType(TEMPLATE_ENGINE_INTERFACE), getAccessorMethod(this.templateEngineField)
+            .getMethodName());
     bodyBuilder.appendFormalLine("resolver.setCharacterEncoding(\"UTF-8\");");
     bodyBuilder.appendFormalLine("resolver.setContentType(\"application/javascript\");");
     bodyBuilder.appendFormalLine("resolver.setViewNames(new String[] {\"*.js\"});");
